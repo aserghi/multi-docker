@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t aserghi/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run aserghi/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t aserghi/multi-client ./client
+  - docker build -t aserghi/multi-nginx ./nginx
+  - docker build -t aserghi/multi-server ./server
+  - docker build -t aserghi/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to Docker hub
+  - docker push aserghi/multi-client
+  - docker push aserghi/multi-nginx
+  - docker push aserghi/multi-server
+  - docker push aserghi/multi-worker
